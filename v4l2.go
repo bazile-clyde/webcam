@@ -29,6 +29,8 @@ type control struct {
 const (
 	V4L2_CAP_VIDEO_CAPTURE      uint32 = 0x00000001
 	V4L2_CAP_STREAMING          uint32 = 0x04000000
+	V4L2_CAP_VIDEO_M2M                 = 0x00008000
+	V4L2_CAP_VIDEO_M2M_MPLANE          = 0x00004000
 	V4L2_BUF_TYPE_VIDEO_CAPTURE uint32 = 1
 	V4L2_MEMORY_MMAP            uint32 = 1
 	V4L2_FIELD_ANY              uint32 = 0
@@ -130,7 +132,7 @@ type v4l2_frmsize_stepwise struct {
 	Step_height uint32
 }
 
-//Hack to make go compiler properly align union
+// Hack to make go compiler properly align union
 type v4l2_format_aligned_union struct {
 	data [200 - unsafe.Sizeof(__p)]byte
 	_    unsafe.Pointer
@@ -224,6 +226,19 @@ type v4l2_streamparm_union struct {
 type v4l2_streamparm struct {
 	_type uint32
 	union v4l2_streamparm_union
+}
+
+func checkCapabilities_v2(fd uintptr) (bool, error) {
+	caps := &v4l2_capability{}
+	err := ioctl.Ioctl(fd, VIDIOC_QUERYCAP, uintptr(unsafe.Pointer(caps)))
+	if err != nil {
+		return false, err
+	}
+
+	supportsM2M := (caps.capabilities & V4L2_CAP_VIDEO_M2M) != 0
+	supportsM2MMPlane := (caps.capabilities & V4L2_CAP_VIDEO_M2M_MPLANE) != 0
+	return supportsM2M || supportsM2MMPlane, nil
+
 }
 
 func checkCapabilities(fd uintptr) (supportsVideoCapture bool, supportsVideoStreaming bool, err error) {

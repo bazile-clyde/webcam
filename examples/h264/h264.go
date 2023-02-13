@@ -10,12 +10,15 @@ func handleError(err error) {
 		panic(err.Error())
 	}
 }
-func main() {
-	_, err := webcam.Open("/dev/video0")
-	handleError(err)
 
-	_, err = webcam.Open("/dev/video11")
+func main() {
+	cam, err := webcam.Open("/dev/video0")
 	handleError(err)
+	defer cam.Close()
+
+	encoder, err := webcam.Open("/dev/video11")
+	handleError(err)
+	defer encoder.Close()
 
 	fmt.Print("finished")
 }

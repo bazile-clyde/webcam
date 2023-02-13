@@ -59,6 +59,31 @@ func Open(path string) (*Webcam, error) {
 	return w, nil
 }
 
+func Open_v2(path string) (*Webcam, error) {
+
+	handle, err := unix.Open(path, unix.O_RDWR|unix.O_NONBLOCK, 0666)
+	fd := uintptr(handle)
+
+	if fd < 0 || err != nil {
+		return nil, err
+	}
+
+	hasM2M, err := checkCapabilities_v2(fd)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !hasM2M {
+		return nil, errors.New("not a video mem-to-mem device")
+	}
+
+	w := new(Webcam)
+	w.fd = uintptr(fd)
+	w.bufcount = 256
+	return w, nil
+}
+
 // Returns image formats supported by the device alongside with
 // their text description
 // Not that this function is somewhat experimental. Frames are not ordered in
