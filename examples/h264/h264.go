@@ -16,7 +16,7 @@ func main() {
 	handleError(err)
 	defer cam.Close()
 
-	encoder, err := webcam.Open("/dev/video11")
+	encoder, err := webcam.Open_v2("/dev/video11")
 	handleError(err)
 	defer encoder.Close()
 
