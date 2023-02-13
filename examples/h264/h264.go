@@ -20,5 +20,5 @@ func main() {
 	handleError(err)
 	defer encoder.Close()
 
-	fmt.Print("finished")
+	fmt.Println("finished")
 }
