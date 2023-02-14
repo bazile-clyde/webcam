@@ -9,6 +9,7 @@ import (
 )
 
 const V4L2_PIX_FMT_YUYV = 0x56595559
+const V4L2_PIX_FMT_MJPG = 0x47504A4D
 
 func panicOnError(err error) {
 	if err != nil {
@@ -34,15 +35,15 @@ func main() {
 	err = source.SetBufferCount(1)
 	panicOnError(err)
 
-	var format webcam.PixelFormat = V4L2_PIX_FMT_YUYV
+	var format webcam.PixelFormat = V4L2_PIX_FMT_MJPG
 	formatDesc := source.GetSupportedFormats()
 	if _, ok := formatDesc[format]; !ok {
 		panicOnError(errors.New(fmt.Sprintf("cannot support pixel format %v", format)))
 	}
 
 	fmt.Println("Available formats:")
-	for _, s := range formatDesc {
-		fmt.Fprintln(os.Stderr, s)
+	for k, s := range formatDesc {
+		fmt.Fprintln(os.Stderr, s, k)
 	}
 
 	frames := source.GetSupportedFrameSizes(format)
