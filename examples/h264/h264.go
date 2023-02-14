@@ -2,9 +2,11 @@ package main
 
 import "C"
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/blackjack/webcam"
+	"image/jpeg"
 	"os"
 )
 
@@ -62,8 +64,17 @@ func main() {
 	err = source.WaitForFrame(timeout)
 	panicOnError(err)
 
-	_, err = source.ReadFrame()
+	frame, err := source.ReadFrame()
 	panicOnError(err)
+
+	img, err := jpeg.Decode(bytes.NewReader(frame))
+	panicOnError(err)
+
+	file, err := os.Create("img.jpg")
+	panicOnError(err)
+
+	defer file.Close()
+	panicOnError(jpeg.Encode(file, img, nil))
 
 	// "output” refers to the raw frames being encoded
 	output, err := webcam.Open_v2("/dev/video11")
