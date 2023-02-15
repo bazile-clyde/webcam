@@ -214,39 +214,39 @@ func (w *Webcam) StartStreaming_v2() error {
 	var length uint32
 
 	if err := mmapRequestBuffers_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, &w.bufcount); err != nil {
-		return errors.New("Failed to map request buffers: " + string(err.Error()))
+		return errors.New("Failed to map output request buffers: " + string(err.Error()))
 	}
 
 	output, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, OUTPUT, &length)
 	if err != nil {
-		return errors.New("Failed to map memory: " + string(err.Error()))
+		return errors.New("Failed to map output memory: " + string(err.Error()))
 	}
 	w.buffers[OUTPUT] = output
 
 	if err := mmapRequestBuffers_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, &w.bufcount); err != nil {
-		return errors.New("Failed to map request buffers: " + string(err.Error()))
+		return errors.New("Failed to map capture request buffers: " + string(err.Error()))
 	}
 
 	capture, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, CAPTURE, &length)
 	if err != nil {
-		return errors.New("Failed to map memory: " + string(err.Error()))
+		return errors.New("Failed to map capture memory: " + string(err.Error()))
 	}
 	w.buffers[CAPTURE] = capture
 
 	if err := mmapEnqueueBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, uint32(OUTPUT)); err != nil {
-		return errors.New("Failed to enqueue buffer: " + string(err.Error()))
+		return errors.New("Failed to enqueue output buffer: " + string(err.Error()))
 	}
 
 	if err := mmapEnqueueBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, uint32(CAPTURE)); err != nil {
-		return errors.New("Failed to enqueue buffer: " + string(err.Error()))
+		return errors.New("Failed to enqueue capture buffer: " + string(err.Error()))
 	}
 
 	if err = startStreaming_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE); err != nil {
-		return errors.New("Failed to start streaming: " + string(err.Error()))
+		return errors.New("Failed to start output streaming: " + string(err.Error()))
 	}
 
 	if err = startStreaming_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE); err != nil {
-		return errors.New("Failed to start streaming: " + string(err.Error()))
+		return errors.New("Failed to start capture streaming: " + string(err.Error()))
 	}
 
 	w.streaming = true
