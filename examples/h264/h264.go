@@ -2,11 +2,9 @@ package main
 
 import "C"
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"github.com/blackjack/webcam"
-	"image/jpeg"
 	"os"
 )
 
@@ -28,8 +26,8 @@ func panicOnError(err error) {
 //   - Closing the device
 //
 // In practice most steps are optional and can be executed out of order.
+// Frames are sent to output devices like graphics cards and read from capture devices like cameras.
 func main() {
-	// frames are sent to output devices like graphics cards and read from capture devices like cameras.
 	source, err := webcam.Open("/dev/video0")
 	panicOnError(err)
 	defer source.Close()
@@ -64,22 +62,31 @@ func main() {
 	err = source.WaitForFrame(timeout)
 	panicOnError(err)
 
-	frame, err := source.ReadFrame()
+	// frame, err := source.ReadFrame()
+	_, err = source.ReadFrame()
 	panicOnError(err)
 
-	img, err := jpeg.Decode(bytes.NewReader(frame))
-	panicOnError(err)
+	// img, err := jpeg.Decode(bytes.NewReader(frame))
+	// panicOnError(err)
 
-	file, err := os.Create("img.jpg")
-	panicOnError(err)
+	// file, err := os.Create("img.jpg")
+	// panicOnError(err)
 
-	defer file.Close()
-	panicOnError(jpeg.Encode(file, img, nil))
+	// defer file.Close()
+	// panicOnError(jpeg.Encode(file, img, nil))
 
-	// "output” refers to the raw frames being encoded
 	output, err := webcam.Open_v2("/dev/video11")
 	panicOnError(err)
 	defer output.Close()
+
+	err = source.SetBufferCount(1)
+	panicOnError(err)
+
+	f, w, h, err = source.SetImageFormat_v2(format, size.MaxWidth, size.MaxHeight)
+	panicOnError(err)
+
+	_, err = fmt.Fprintf(os.Stderr, "Resulting image format: %s %dx%d\n", formatDesc[f], w, h)
+	panicOnError(err)
 
 	fmt.Println("finished")
 }

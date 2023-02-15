@@ -150,6 +150,21 @@ func (w *Webcam) SetImageFormat(f PixelFormat, width, height uint32) (PixelForma
 	}
 }
 
+func (w *Webcam) SetImageFormat_v2(f PixelFormat, width, height uint32) (PixelFormat, uint32, uint32, error) {
+
+	code := uint32(f)
+	cw := width
+	ch := height
+
+	err := setImageFormat_v2(w.fd, &code, &width, &height)
+
+	if err != nil {
+		return 0, 0, 0, err
+	} else {
+		return PixelFormat(code), cw, ch, nil
+	}
+}
+
 // Set the number of frames to be buffered.
 // Not allowed if streaming is already on.
 func (w *Webcam) SetBufferCount(count uint32) error {

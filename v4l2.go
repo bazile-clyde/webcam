@@ -27,13 +27,15 @@ type control struct {
 }
 
 const (
-	V4L2_CAP_VIDEO_CAPTURE      uint32 = 0x00000001
-	V4L2_CAP_STREAMING          uint32 = 0x04000000
-	V4L2_CAP_VIDEO_M2M                 = 0x00008000
-	V4L2_CAP_VIDEO_M2M_MPLANE          = 0x00004000
-	V4L2_BUF_TYPE_VIDEO_CAPTURE uint32 = 1
-	V4L2_MEMORY_MMAP            uint32 = 1
-	V4L2_FIELD_ANY              uint32 = 0
+	V4L2_CAP_VIDEO_CAPTURE             uint32 = 0x00000001
+	V4L2_CAP_STREAMING                 uint32 = 0x04000000
+	V4L2_CAP_VIDEO_M2M                        = 0x00008000
+	V4L2_CAP_VIDEO_M2M_MPLANE                 = 0x00004000
+	V4L2_BUF_TYPE_VIDEO_CAPTURE        uint32 = 1
+	V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE        = 9
+	V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE         = 10
+	V4L2_MEMORY_MMAP                   uint32 = 1
+	V4L2_FIELD_ANY                     uint32 = 0
 )
 
 const (
@@ -74,6 +76,7 @@ var (
 	VIDIOC_QUERYCAP  = ioctl.IoR(uintptr('V'), 0, unsafe.Sizeof(v4l2_capability{}))
 	VIDIOC_ENUM_FMT  = ioctl.IoRW(uintptr('V'), 2, unsafe.Sizeof(v4l2_fmtdesc{}))
 	VIDIOC_S_FMT     = ioctl.IoRW(uintptr('V'), 5, unsafe.Sizeof(v4l2_format{}))
+	VIDIOC_G_FMT     = ioctl.IoRW(uintptr('V'), 4, unsafe.Sizeof(v4l2_format{}))
 	VIDIOC_REQBUFS   = ioctl.IoRW(uintptr('V'), 8, unsafe.Sizeof(v4l2_requestbuffers{}))
 	VIDIOC_QUERYBUF  = ioctl.IoRW(uintptr('V'), 9, unsafe.Sizeof(v4l2_buffer{}))
 	VIDIOC_QBUF      = ioctl.IoRW(uintptr('V'), 15, unsafe.Sizeof(v4l2_buffer{}))
@@ -156,6 +159,27 @@ type v4l2_pix_format struct {
 	Ycbcr_enc    uint32
 	Quantization uint32
 	Xfer_func    uint32
+}
+
+const VIDEO_MAX_PLANES = 8
+
+type v4l2_pix_format_mplane struct {
+	Width        uint32
+	Height       uint32
+	Pixelformat  uint32
+	Field        uint32
+	ColorSpace   uint32
+	PlaneFmt     [VIDEO_MAX_PLANES]v4l2_plane_pix_format
+	NumPlanes    uint8
+	Flags        uint8
+	Ycbcr_enc    uint8
+	Quantization uint8
+	Xfer_func    uint8
+}
+
+type v4l2_plane_pix_format struct {
+	SizeImage    uint32
+	BytesPerLine uint32
 }
 
 type v4l2_requestbuffers struct {
@@ -322,6 +346,49 @@ func getFrameSize(fd uintptr, index uint32, code uint32) (frameSize FrameSize, e
 		frameSize.MaxHeight = stepwise.Max_height
 		frameSize.StepHeight = stepwise.Step_height
 	}
+
+	return
+}
+
+func setImageFormat_v2(fd uintptr, formatcode *uint32, width *uint32, height *uint32) (err error) {
+
+	format := &v4l2_format{
+		_type: V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE,
+	}
+
+	pix_mp := v4l2_pix_format_mplane{
+		Width:       *width,
+		Height:      *height,
+		Pixelformat: *formatcode,
+	}
+
+	pixbytes := &bytes.Buffer{}
+	if err = binary.Write(pixbytes, NativeByteOrder, pix_mp); err != nil {
+		return
+	}
+
+	copy(format.union.data[:], pixbytes.Bytes())
+	if err = ioctl.Ioctl(fd, VIDIOC_G_FMT, uintptr(unsafe.Pointer(format))); err != nil {
+		return
+	}
+
+	if err = ioctl.Ioctl(fd, VIDIOC_S_FMT, uintptr(unsafe.Pointer(format))); err != nil {
+		return
+	}
+
+	format._type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE
+	if err = ioctl.Ioctl(fd, VIDIOC_G_FMT, uintptr(unsafe.Pointer(format))); err != nil {
+		return
+	}
+
+	pixReverse := &v4l2_pix_format{}
+	if err = binary.Read(bytes.NewBuffer(format.union.data[:]), NativeByteOrder, pixReverse); err != nil {
+		return
+	}
+
+	*width = pixReverse.Width
+	*height = pixReverse.Height
+	*formatcode = pixReverse.Pixelformat
 
 	return
 }
