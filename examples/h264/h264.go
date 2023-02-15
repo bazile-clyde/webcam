@@ -88,5 +88,7 @@ func main() {
 	_, err = fmt.Fprintf(os.Stderr, "Resulting image format: %s %dx%d\n", formatDesc[f], w, h)
 	panicOnError(err)
 
+	panicOnError(codec.StartStreaming_v2())
+
 	fmt.Println("finished")
 }

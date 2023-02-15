@@ -204,6 +204,55 @@ func (w *Webcam) SetFramerate(fps float32) error {
 	return setFramerate(w.fd, 1000, uint32(1000*(fps)))
 }
 
+func (w *Webcam) StartStreaming_v2() error {
+	const OUTPUT, CAPTURE = 0, 1
+	if w.streaming {
+		return errors.New("Already streaming")
+	}
+
+	w.buffers = make([][]byte, 2, 2)
+	var length uint32
+
+	if err := mmapRequestBuffers_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, &w.bufcount); err != nil {
+		return errors.New("Failed to map request buffers: " + string(err.Error()))
+	}
+
+	output, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, 0, &length)
+	if err != nil {
+		return errors.New("Failed to map memory: " + string(err.Error()))
+	}
+	w.buffers[OUTPUT] = output
+
+	if err := mmapRequestBuffers_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, &w.bufcount); err != nil {
+		return errors.New("Failed to map request buffers: " + string(err.Error()))
+	}
+
+	capture, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, 0, &length)
+	if err != nil {
+		return errors.New("Failed to map memory: " + string(err.Error()))
+	}
+	w.buffers[CAPTURE] = capture
+
+	if err := mmapEnqueueBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, uint32(OUTPUT)); err != nil {
+		return errors.New("Failed to enqueue buffer: " + string(err.Error()))
+	}
+
+	if err := mmapEnqueueBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, uint32(CAPTURE)); err != nil {
+		return errors.New("Failed to enqueue buffer: " + string(err.Error()))
+	}
+
+	if err = startStreaming_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE); err != nil {
+		return errors.New("Failed to start streaming: " + string(err.Error()))
+	}
+
+	if err = startStreaming_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE); err != nil {
+		return errors.New("Failed to start streaming: " + string(err.Error()))
+	}
+
+	w.streaming = true
+	return nil
+}
+
 // Start streaming process
 func (w *Webcam) StartStreaming() error {
 	if w.streaming {

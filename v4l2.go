@@ -436,6 +436,25 @@ func setImageFormat(fd uintptr, formatcode *uint32, width *uint32, height *uint3
 
 }
 
+func mmapRequestBuffers_v2(fd uintptr, _type uint32, buf_count *uint32) (err error) {
+
+	req := &v4l2_requestbuffers{}
+	req.count = *buf_count
+	req._type = _type
+	req.memory = V4L2_MEMORY_MMAP
+
+	err = ioctl.Ioctl(fd, VIDIOC_REQBUFS, uintptr(unsafe.Pointer(req)))
+
+	if err != nil {
+		return
+	}
+
+	*buf_count = req.count
+
+	return
+
+}
+
 func mmapRequestBuffers(fd uintptr, buf_count *uint32) (err error) {
 
 	req := &v4l2_requestbuffers{}
@@ -453,6 +472,29 @@ func mmapRequestBuffers(fd uintptr, buf_count *uint32) (err error) {
 
 	return
 
+}
+
+func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) (buffer []byte, err error) {
+
+	req := &v4l2_buffer{}
+
+	req._type = _type
+	req.memory = V4L2_MEMORY_MMAP
+	req.index = index
+
+	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF, uintptr(unsafe.Pointer(req))); err != nil {
+		return
+	}
+
+	var offset uint32
+	if err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, &offset); err != nil {
+		return
+	}
+
+	*length = req.length
+
+	buffer, err = unix.Mmap(int(fd), int64(offset), int(req.length), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
+	return
 }
 
 func mmapQueryBuffer(fd uintptr, index uint32, length *uint32) (buffer []byte, err error) {
@@ -502,6 +544,18 @@ func mmapDequeueBuffer(fd uintptr, index *uint32, length *uint32) (err error) {
 
 }
 
+func mmapEnqueueBuffer_v2(fd uintptr, _type uint32, index uint32) (err error) {
+
+	buffer := &v4l2_buffer{}
+
+	buffer._type = _type
+	buffer.memory = V4L2_MEMORY_MMAP
+	buffer.index = index
+
+	err = ioctl.Ioctl(fd, VIDIOC_QBUF, uintptr(unsafe.Pointer(buffer)))
+	return
+}
+
 func mmapEnqueueBuffer(fd uintptr, index uint32) (err error) {
 
 	buffer := &v4l2_buffer{}
@@ -518,6 +572,12 @@ func mmapEnqueueBuffer(fd uintptr, index uint32) (err error) {
 func mmapReleaseBuffer(buffer []byte) (err error) {
 	err = unix.Munmap(buffer)
 	return
+}
+
+func startStreaming_v2(fd uintptr, uintPointer uint32) (err error) {
+	err = ioctl.Ioctl(fd, VIDIOC_STREAMON, uintptr(unsafe.Pointer(&uintPointer)))
+	return
+
 }
 
 func startStreaming(fd uintptr) (err error) {
