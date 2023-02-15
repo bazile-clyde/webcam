@@ -217,7 +217,7 @@ func (w *Webcam) StartStreaming_v2() error {
 		return errors.New("Failed to map request buffers: " + string(err.Error()))
 	}
 
-	output, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, 0, &length)
+	output, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, OUTPUT, &length)
 	if err != nil {
 		return errors.New("Failed to map memory: " + string(err.Error()))
 	}
@@ -227,7 +227,7 @@ func (w *Webcam) StartStreaming_v2() error {
 		return errors.New("Failed to map request buffers: " + string(err.Error()))
 	}
 
-	capture, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, 0, &length)
+	capture, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, CAPTURE, &length)
 	if err != nil {
 		return errors.New("Failed to map memory: " + string(err.Error()))
 	}
