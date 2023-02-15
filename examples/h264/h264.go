@@ -75,14 +75,14 @@ func main() {
 	// defer file.Close()
 	// panicOnError(jpeg.Encode(file, img, nil))
 
-	output, err := webcam.Open_v2("/dev/video11")
+	codec, err := webcam.Open_v2("/dev/video11")
 	panicOnError(err)
-	defer output.Close()
+	defer codec.Close()
 
-	err = source.SetBufferCount(1)
+	err = codec.SetBufferCount(1)
 	panicOnError(err)
 
-	f, w, h, err = source.SetImageFormat_v2(format, size.MaxWidth, size.MaxHeight)
+	f, w, h, err = codec.SetImageFormat_v2(format, size.MaxWidth, size.MaxHeight)
 	panicOnError(err)
 
 	_, err = fmt.Fprintf(os.Stderr, "Resulting image format: %s %dx%d\n", formatDesc[f], w, h)
