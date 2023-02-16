@@ -506,14 +506,8 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 
 	plane := &v4l2_plane{}
 	err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, plane)
-
-	var offset uint32
-	if err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, &offset); err != nil {
-		return
-	}
-
+	offset := plane.data_offset
 	*length = plane.length
-
 	buffer, err = unix.Mmap(int(fd), int64(offset), int(*length), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
 	return
 }
