@@ -210,7 +210,7 @@ func (w *Webcam) StartStreaming_v2() error {
 		return errors.New("Already streaming")
 	}
 
-	w.buffers = make([][]byte, 2, 2)
+	w.buffers = make([][]byte, w.bufcount, w.bufcount)
 	var length uint32
 
 	if err := mmapRequestBuffers_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, &w.bufcount); err != nil {
