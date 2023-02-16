@@ -252,6 +252,19 @@ type v4l2_streamparm struct {
 	union v4l2_streamparm_union
 }
 
+type v4l2_plane struct {
+	bytesused   uint32
+	length      uint32
+	m           v4l2_plane_union
+	data_offset uint32
+}
+
+type v4l2_plane_union struct {
+	mem_offset uint32
+	userptr    uintptr
+	fd         int32
+}
+
 func checkCapabilities_v2(fd uintptr) (bool, error) {
 	caps := &v4l2_capability{}
 	err := ioctl.Ioctl(fd, VIDIOC_QUERYCAP, uintptr(unsafe.Pointer(caps)))
@@ -481,19 +494,27 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	req._type = _type
 	req.memory = V4L2_MEMORY_MMAP
 	req.index = index
+	req.length = *length
+
+	if req.reserved != 0 || req.reserved2 != 0 {
+		panic("The reserved and reserved2 fields must be set to 0")
+	}
 
 	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF, uintptr(unsafe.Pointer(req))); err != nil {
 		return
 	}
+
+	plane := &v4l2_plane{}
+	err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, plane)
 
 	var offset uint32
 	if err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, &offset); err != nil {
 		return
 	}
 
-	*length = req.length
+	*length = plane.length
 
-	buffer, err = unix.Mmap(int(fd), int64(offset), int(req.length), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
+	buffer, err = unix.Mmap(int(fd), int64(offset), int(*length), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
 	return
 }
 

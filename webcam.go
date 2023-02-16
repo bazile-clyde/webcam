@@ -223,31 +223,31 @@ func (w *Webcam) StartStreaming_v2() error {
 	}
 	w.buffers[OUTPUT] = output
 
-	if err := mmapRequestBuffers_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, &w.bufcount); err != nil {
-		return errors.New("Failed to map capture request buffers: " + string(err.Error()))
-	}
+	// if err := mmapRequestBuffers_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, &w.bufcount); err != nil {
+	// 	return errors.New("Failed to map capture request buffers: " + string(err.Error()))
+	// }
 
-	capture, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, CAPTURE, &length)
-	if err != nil {
-		return errors.New("Failed to map capture memory: " + string(err.Error()))
-	}
-	w.buffers[CAPTURE] = capture
+	// capture, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, CAPTURE, &length)
+	// if err != nil {
+	// 	return errors.New("Failed to map capture memory: " + string(err.Error()))
+	// }
+	// w.buffers[CAPTURE] = capture
 
 	if err := mmapEnqueueBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, uint32(OUTPUT)); err != nil {
 		return errors.New("Failed to enqueue output buffer: " + string(err.Error()))
 	}
 
-	if err := mmapEnqueueBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, uint32(CAPTURE)); err != nil {
-		return errors.New("Failed to enqueue capture buffer: " + string(err.Error()))
-	}
+	// if err := mmapEnqueueBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, uint32(CAPTURE)); err != nil {
+	// 	return errors.New("Failed to enqueue capture buffer: " + string(err.Error()))
+	// }
 
 	if err = startStreaming_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE); err != nil {
 		return errors.New("Failed to start output streaming: " + string(err.Error()))
 	}
 
-	if err = startStreaming_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE); err != nil {
-		return errors.New("Failed to start capture streaming: " + string(err.Error()))
-	}
+	// if err = startStreaming_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE); err != nil {
+	// 	return errors.New("Failed to start capture streaming: " + string(err.Error()))
+	// }
 
 	w.streaming = true
 	return nil
