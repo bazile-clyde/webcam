@@ -74,19 +74,20 @@ const (
 )
 
 var (
-	VIDIOC_QUERYCAP  = ioctl.IoR(uintptr('V'), 0, unsafe.Sizeof(v4l2_capability{}))
-	VIDIOC_ENUM_FMT  = ioctl.IoRW(uintptr('V'), 2, unsafe.Sizeof(v4l2_fmtdesc{}))
-	VIDIOC_S_FMT     = ioctl.IoRW(uintptr('V'), 5, unsafe.Sizeof(v4l2_format{}))
-	VIDIOC_G_FMT     = ioctl.IoRW(uintptr('V'), 4, unsafe.Sizeof(v4l2_format{}))
-	VIDIOC_REQBUFS   = ioctl.IoRW(uintptr('V'), 8, unsafe.Sizeof(v4l2_requestbuffers{}))
-	VIDIOC_QUERYBUF  = ioctl.IoRW(uintptr('V'), 9, unsafe.Sizeof(v4l2_buffer{}))
-	VIDIOC_QBUF      = ioctl.IoRW(uintptr('V'), 15, unsafe.Sizeof(v4l2_buffer{}))
-	VIDIOC_DQBUF     = ioctl.IoRW(uintptr('V'), 17, unsafe.Sizeof(v4l2_buffer{}))
-	VIDIOC_G_PARM    = ioctl.IoRW(uintptr('V'), 21, unsafe.Sizeof(v4l2_streamparm{}))
-	VIDIOC_S_PARM    = ioctl.IoRW(uintptr('V'), 22, unsafe.Sizeof(v4l2_streamparm{}))
-	VIDIOC_G_CTRL    = ioctl.IoRW(uintptr('V'), 27, unsafe.Sizeof(v4l2_control{}))
-	VIDIOC_S_CTRL    = ioctl.IoRW(uintptr('V'), 28, unsafe.Sizeof(v4l2_control{}))
-	VIDIOC_QUERYCTRL = ioctl.IoRW(uintptr('V'), 36, unsafe.Sizeof(v4l2_queryctrl{}))
+	VIDIOC_QUERYCAP    = ioctl.IoR(uintptr('V'), 0, unsafe.Sizeof(v4l2_capability{}))
+	VIDIOC_ENUM_FMT    = ioctl.IoRW(uintptr('V'), 2, unsafe.Sizeof(v4l2_fmtdesc{}))
+	VIDIOC_S_FMT       = ioctl.IoRW(uintptr('V'), 5, unsafe.Sizeof(v4l2_format{}))
+	VIDIOC_G_FMT       = ioctl.IoRW(uintptr('V'), 4, unsafe.Sizeof(v4l2_format{}))
+	VIDIOC_REQBUFS     = ioctl.IoRW(uintptr('V'), 8, unsafe.Sizeof(v4l2_requestbuffers{}))
+	VIDIOC_QUERYBUF    = ioctl.IoRW(uintptr('V'), 9, unsafe.Sizeof(v4l2_buffer{}))
+	VIDIOC_QUERYBUF_V2 = ioctl.IoRW(uintptr('V'), 9, unsafe.Sizeof(v4l2_buffer_v2{}))
+	VIDIOC_QBUF        = ioctl.IoRW(uintptr('V'), 15, unsafe.Sizeof(v4l2_buffer{}))
+	VIDIOC_DQBUF       = ioctl.IoRW(uintptr('V'), 17, unsafe.Sizeof(v4l2_buffer{}))
+	VIDIOC_G_PARM      = ioctl.IoRW(uintptr('V'), 21, unsafe.Sizeof(v4l2_streamparm{}))
+	VIDIOC_S_PARM      = ioctl.IoRW(uintptr('V'), 22, unsafe.Sizeof(v4l2_streamparm{}))
+	VIDIOC_G_CTRL      = ioctl.IoRW(uintptr('V'), 27, unsafe.Sizeof(v4l2_control{}))
+	VIDIOC_S_CTRL      = ioctl.IoRW(uintptr('V'), 28, unsafe.Sizeof(v4l2_control{}))
+	VIDIOC_QUERYCTRL   = ioctl.IoRW(uintptr('V'), 36, unsafe.Sizeof(v4l2_queryctrl{}))
 	//sizeof int32
 	VIDIOC_STREAMON        = ioctl.IoW(uintptr('V'), 18, 4)
 	VIDIOC_STREAMOFF       = ioctl.IoW(uintptr('V'), 19, 4)
@@ -526,7 +527,7 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	req.m.planes = uintptr(unsafe.Pointer(plane))
 	req.length = 1 // number of elements in req.m.planes
 
-	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF, uintptr(unsafe.Pointer(req))); err != nil {
+	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF_V2, uintptr(unsafe.Pointer(req))); err != nil {
 		err = errors.New(fmt.Sprintf("VIDIOC_QUERYBUF: %v", err.Error()))
 		return
 	}
