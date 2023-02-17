@@ -3,6 +3,7 @@ package webcam
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"unsafe"
 
@@ -501,6 +502,7 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	}
 
 	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF, uintptr(unsafe.Pointer(req))); err != nil {
+		err = errors.New(fmt.Sprintf("VIDIOC_QUERYBUF: %v", err.Error()))
 		return
 	}
 
@@ -509,6 +511,9 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	offset := plane.data_offset
 	*length = plane.length
 	buffer, err = unix.Mmap(int(fd), int64(offset), int(*length), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
+	if err != nil {
+		err = errors.New(fmt.Sprintf("unix.Mmap: %v", err.Error()))
+	}
 	return
 }
 
