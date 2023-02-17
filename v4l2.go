@@ -390,7 +390,7 @@ func getFrameSize(fd uintptr, index uint32, code uint32) (frameSize FrameSize, e
 func setImageFormat_v2(fd uintptr, formatcode *uint32, width *uint32, height *uint32) (err error) {
 
 	format := &v4l2_format{
-		_type: V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE,
+		_type: V4L2_BUF_TYPE_VIDEO_CAPTURE,
 	}
 
 	pix_mp := v4l2_pix_format_mplane{
