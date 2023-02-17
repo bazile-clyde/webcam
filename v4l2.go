@@ -206,6 +206,29 @@ type v4l2_buffer struct {
 	reserved  uint32
 }
 
+type v4l2_buffer_v2 struct {
+	index     uint32
+	_type     uint32
+	bytesused uint32
+	flags     uint32
+	field     uint32
+	timestamp unix.Timeval
+	timecode  v4l2_timecode
+	sequence  uint32
+	memory    uint32
+	m         v4l2_union
+	length    uint32
+	reserved2 uint32
+	reserved  uint32
+}
+
+type v4l2_union struct {
+	offset  uint32
+	userptr uintptr
+	planes  *v4l2_plane
+	fd      int
+}
+
 type v4l2_timecode struct {
 	_type    uint32
 	flags    uint32
@@ -490,30 +513,31 @@ func mmapRequestBuffers(fd uintptr, buf_count *uint32) (err error) {
 
 func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) (buffer []byte, err error) {
 
-	req := &v4l2_buffer{}
+	req := &v4l2_buffer_v2{}
 
 	req._type = _type
-	req.memory = V4L2_MEMORY_MMAP
 	req.index = index
-	req.length = *length
 
 	if req.reserved != 0 || req.reserved2 != 0 {
 		panic("The reserved and reserved2 fields must be set to 0")
 	}
+
+	plane := &v4l2_plane{}
+	req.m.planes = plane
+	req.length = 1 // number of elements in req.m.planes
 
 	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF, uintptr(unsafe.Pointer(req))); err != nil {
 		err = errors.New(fmt.Sprintf("VIDIOC_QUERYBUF: %v", err.Error()))
 		return
 	}
 
-	plane := &v4l2_plane{}
-	err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, plane)
-	offset := plane.data_offset
-	*length = plane.length
-	buffer, err = unix.Mmap(int(fd), int64(offset), int(*length), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
-	if err != nil {
-		err = errors.New(fmt.Sprintf("unix.Mmap: %v", err.Error()))
-	}
+	// err = binary.Read(bytes.NewBuffer(&req.m.planes[:]), NativeByteOrder, plane)
+	// offset := plane.data_offset
+	// *length = plane.length
+	// buffer, err = unix.Mmap(int(fd), int64(offset), int(*length), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
+	// if err != nil {
+	// 	err = errors.New(fmt.Sprintf("unix.Mmap: %v", err.Error()))
+	// }
 	return
 }
 
