@@ -200,7 +200,7 @@ type v4l2_buffer struct {
 	timecode  v4l2_timecode
 	sequence  uint32
 	memory    uint32
-	union     [unsafe.Sizeof(__p)]uint8
+	union     v4l2_union
 	length    uint32
 	reserved2 uint32
 	reserved  uint32
@@ -264,6 +264,13 @@ type v4l2_plane_union struct {
 	mem_offset uint32
 	userptr    uintptr
 	fd         int32
+}
+
+type v4l2_union struct {
+	offset  uint32
+	userptr uintptr
+	planes  *v4l2_plane
+	fd      int32
 }
 
 func checkCapabilities_v2(fd uintptr) (bool, error) {
@@ -531,8 +538,8 @@ func mmapQueryBuffer(fd uintptr, index uint32, length *uint32) (buffer []byte, e
 	}
 
 	var offset uint32
-	err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, &offset)
-
+	unionBytes := []byte(fmt.Sprintf("%v", req.union))
+	err = binary.Read(bytes.NewBuffer(unionBytes[:]), NativeByteOrder, &offset)
 	if err != nil {
 		return
 	}
