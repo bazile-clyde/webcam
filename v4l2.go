@@ -513,7 +513,7 @@ func mmapRequestBuffers(fd uintptr, buf_count *uint32) (err error) {
 
 func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) (buffer []byte, err error) {
 
-	req := &v4l2_buffer_v2{}
+	req := &v4l2_buffer{}
 
 	req._type = V4L2_BUF_TYPE_VIDEO_CAPTURE
 	req.index = index
@@ -522,7 +522,7 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 		panic("The reserved and reserved2 fields must be set to 0")
 	}
 
-	req.length = 0 // number of elements in req.m.planes
+	// req.length = 0 // number of elements in req.m.planes
 
 	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF, uintptr(unsafe.Pointer(req))); err != nil {
 		err = errors.New(fmt.Sprintf("VIDIOC_QUERYBUF: %v", err.Error()))
