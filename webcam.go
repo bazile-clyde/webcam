@@ -205,7 +205,6 @@ func (w *Webcam) SetFramerate(fps float32) error {
 }
 
 func (w *Webcam) StartStreaming_v2() error {
-	const OUTPUT, CAPTURE = 0, 1
 	if w.streaming {
 		return errors.New("Already streaming")
 	}
@@ -217,7 +216,7 @@ func (w *Webcam) StartStreaming_v2() error {
 	w.buffers = make([][]byte, w.bufcount, w.bufcount)
 	for index, _ := range w.buffers {
 		var length uint32
-		output, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, OUTPUT, &length)
+		output, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, uint32(index), &length)
 		if err != nil {
 			return errors.New("Failed to map output memory: " + string(err.Error()))
 		}
