@@ -390,7 +390,7 @@ func getFrameSize(fd uintptr, index uint32, code uint32) (frameSize FrameSize, e
 func setImageFormat_v2(fd uintptr, formatcode *uint32, width *uint32, height *uint32) (err error) {
 
 	format := &v4l2_format{
-		_type: V4L2_BUF_TYPE_VIDEO_CAPTURE,
+		_type: V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE,
 	}
 
 	pix_mp := v4l2_pix_format_mplane{
@@ -513,16 +513,16 @@ func mmapRequestBuffers(fd uintptr, buf_count *uint32) (err error) {
 
 func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) (buffer []byte, err error) {
 
-	req := &v4l2_buffer{}
+	req := &v4l2_buffer_v2{}
 
-	req._type = V4L2_BUF_TYPE_VIDEO_CAPTURE
+	req._type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE
 	req.index = index
 
 	if req.reserved != 0 || req.reserved2 != 0 {
 		panic("The reserved and reserved2 fields must be set to 0")
 	}
 
-	// req.length = 0 // number of elements in req.m.planes
+	req.length = 0 // number of elements in req.m.planes
 
 	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF, uintptr(unsafe.Pointer(req))); err != nil {
 		err = errors.New(fmt.Sprintf("VIDIOC_QUERYBUF: %v", err.Error()))
