@@ -515,7 +515,7 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 
 	req := &v4l2_buffer_v2{}
 
-	req._type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE
+	req._type = V4L2_BUF_TYPE_VIDEO_CAPTURE
 	req.index = index
 
 	if req.reserved != 0 || req.reserved2 != 0 {
