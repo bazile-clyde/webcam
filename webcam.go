@@ -214,6 +214,17 @@ func (w *Webcam) StartStreaming_v2() error {
 		return errors.New("Failed to map output request buffers: " + string(err.Error()))
 	}
 
+	w.buffers = make([][]byte, w.bufcount, w.bufcount)
+	for index, _ := range w.buffers {
+		var length uint32
+		output, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, OUTPUT, &length)
+		if err != nil {
+			return errors.New("Failed to map output memory: " + string(err.Error()))
+		}
+
+		w.buffers[index] = output
+	}
+
 	// w.buffers = make([][]byte, w.bufcount, w.bufcount)
 	// var length uint32
 	// output, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, OUTPUT, &length)
