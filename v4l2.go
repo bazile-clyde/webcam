@@ -498,11 +498,7 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	}
 
 	plane := &v4l2_plane{}
-	err = binary.Write(bytes.NewBuffer(req.union[:]), NativeByteOrder, uintptr(unsafe.Pointer(plane)))
-	if err != nil {
-		panic(fmt.Sprintf("cannot load &v4l2_plane into union: %v", err.Error()))
-	}
-
+	NativeByteOrder.PutUint64(req.union[:], uint64(uintptr(unsafe.Pointer(plane))))
 	req.length = 1 // number of elements in req.m.planes
 
 	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF, uintptr(unsafe.Pointer(req))); err != nil {
