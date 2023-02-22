@@ -202,7 +202,7 @@ type v4l2_buffer struct {
 	timecode  v4l2_timecode
 	sequence  uint32
 	memory    uint32
-	union     v4l2_union
+	union     [unsafe.Sizeof(__p)]uint8
 	length    uint32
 	reserved2 uint32
 	reserved  uint32
