@@ -255,24 +255,13 @@ type v4l2_streamparm struct {
 	union v4l2_streamparm_union
 }
 
+type union [unsafe.Sizeof(__p)]uint8 // varies for 32-bit and 64-bit
 type v4l2_plane struct {
 	bytesused   uint32
 	length      uint32
-	m           v4l2_plane_union
+	m           union
 	data_offset uint32
-}
-
-type v4l2_plane_union struct {
-	mem_offset uint32
-	userptr    uintptr
-	fd         int32
-}
-
-type v4l2_union struct {
-	offset  uint32
-	userptr uintptr
-	planes  *v4l2_plane
-	fd      int32
+	reserved    [11]uint32
 }
 
 func checkCapabilities_v2(fd uintptr) (bool, error) {
@@ -507,6 +496,12 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	if req.reserved != 0 || req.reserved2 != 0 {
 		panic("The reserved and reserved2 fields must be set to 0")
 	}
+
+	plane := &v4l2_plane{}
+	copy(
+		(*(&req.union))[:],
+		(*(*[unsafe.Sizeof(v4l2_plane{})]uint8)(unsafe.Pointer(plane)))[:],
+	)
 
 	req.length = 1 // number of elements in req.m.planes
 
