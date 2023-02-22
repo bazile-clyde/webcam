@@ -498,7 +498,7 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	}
 
 	plane := &v4l2_plane{}
-	err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, uintptr(unsafe.Pointer(plane)))
+	err = binary.Write(bytes.NewBuffer(req.union[:]), NativeByteOrder, uintptr(unsafe.Pointer(plane)))
 	if err != nil {
 		panic(fmt.Sprintf("cannot load &v4l2_plane into union: %v", err.Error()))
 	}
