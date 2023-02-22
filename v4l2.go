@@ -499,7 +499,7 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	}
 
 	plane := &v4l2_plane{}
-	pPlane, err := hex.DecodeString(fmt.Sprintf("%v", plane))
+	pPlane, err := hex.DecodeString(fmt.Sprintf("%x", plane))
 	if err != nil {
 		panic(fmt.Sprintf("cannot decode hex string: %v", err.Error()))
 	}
