@@ -3,7 +3,6 @@ package webcam
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"unsafe"
@@ -499,12 +498,11 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	}
 
 	plane := &v4l2_plane{}
-	pPlane, err := hex.DecodeString(fmt.Sprintf("%x", plane))
+	err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, unsafe.Pointer(plane))
 	if err != nil {
-		panic(fmt.Sprintf("cannot decode hex string: %v", err.Error()))
+		panic(fmt.Sprintf("cannot load &v4l2_plane into union: %v", err.Error()))
 	}
 
-	copy(req.union[:], pPlane)
 	req.length = 1 // number of elements in req.m.planes
 
 	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF, uintptr(unsafe.Pointer(req))); err != nil {
