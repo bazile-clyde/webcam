@@ -173,14 +173,16 @@ type v4l2_pix_format_mplane struct {
 	PlaneFmt     [VIDEO_MAX_PLANES]v4l2_plane_pix_format
 	NumPlanes    uint8
 	Flags        uint8
-	Ycbcr_enc    uint8
-	Quantization uint8
-	Xfer_func    uint8
+	Ycbcr_enc    uint32
+	Quantization uint32
+	Xfer_func    uint32
+	Reserved     [7]uint8
 }
 
 type v4l2_plane_pix_format struct {
 	SizeImage    uint32
 	BytesPerLine uint32
+	Reserved     [6]uint16
 }
 
 type v4l2_requestbuffers struct {
@@ -538,8 +540,8 @@ func mmapQueryBuffer(fd uintptr, index uint32, length *uint32) (buffer []byte, e
 	}
 
 	var offset uint32
-	unionBytes := []byte(fmt.Sprintf("%v", req.union))
-	err = binary.Read(bytes.NewBuffer(unionBytes[:]), NativeByteOrder, &offset)
+	err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, &offset)
+
 	if err != nil {
 		return
 	}
