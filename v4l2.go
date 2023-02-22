@@ -497,9 +497,8 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 		panic("The reserved and reserved2 fields must be set to 0")
 	}
 
-	plane := &v4l2_plane{}
 	// for 32-bit arch use PutUint32
-	NativeByteOrder.PutUint64(req.union[:], uint64(uintptr(unsafe.Pointer(plane))))
+	NativeByteOrder.PutUint64(req.union[:], uint64(uintptr(unsafe.Pointer(&v4l2_plane{}))))
 	req.length = 1 // number of elements in req.m.planes
 
 	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF, uintptr(unsafe.Pointer(req))); err != nil {
@@ -507,7 +506,8 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 		return
 	}
 
-	if err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, plane); err != nil {
+	plane := v4l2_plane{}
+	if err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, &plane); err != nil {
 		err = errors.New(fmt.Sprintf("cannot read back v4l2_plane: %v", err.Error()))
 		return
 	}
