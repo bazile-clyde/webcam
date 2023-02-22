@@ -498,15 +498,20 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	}
 
 	plane := &v4l2_plane{}
+	// for 32-bit arch use PutUint32
 	NativeByteOrder.PutUint64(req.union[:], uint64(uintptr(unsafe.Pointer(plane))))
 	req.length = 1 // number of elements in req.m.planes
 
 	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF, uintptr(unsafe.Pointer(req))); err != nil {
-		err = errors.New(fmt.Sprintf("VIDIOC_QUERYBUF: %v", err.Error()))
+		err = errors.New(fmt.Sprintf("cannot query the status of the buffer: %v", err.Error()))
 		return
 	}
 
-	// err = binary.Read(bytes.NewBuffer(&req.m.planes[:]), NativeByteOrder, plane)
+	if err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, plane); err != nil {
+		err = errors.New(fmt.Sprintf("cannot read back v4l2_plane: %v", err.Error()))
+		return
+	}
+
 	// offset := plane.data_offset
 	// *length = plane.length
 	// buffer, err = unix.Mmap(int(fd), int64(offset), int(*length), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
