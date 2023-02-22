@@ -3,6 +3,7 @@ package webcam
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"unsafe"
@@ -512,7 +513,8 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 		return
 	}
 
-	fmt.Println("Bytes =", bytes.NewBuffer(req.union[:]).String())
+	fmt.Println("Bytes:")
+	fmt.Println(hex.Dump(req.union[:]))
 	buffer, err = unix.Mmap(int(fd), int64(offset), int(*length), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
 	if err != nil {
 		err = errors.New(fmt.Sprintf("cannot map file into memory: %v", err.Error()))
