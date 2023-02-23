@@ -502,9 +502,9 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 		panic(fmt.Sprintf("not on 64-bit arch: size of pointer is %d bytes", unsafe.Sizeof(__p)))
 	}
 
-	plane := &v4l2_plane{} // must have a pointer that refers to the newly created object to avoid GC.
+	bPlane := [unsafe.Sizeof(v4l2_plane{})]byte{} // must have a pointer that refers to the newly created object to avoid GC.
 	// for 32-bit arch use PutUint32
-	NativeByteOrder.PutUint64(req.union[:], uint64(uintptr(unsafe.Pointer(plane))))
+	NativeByteOrder.PutUint64(req.union[:], uint64(uintptr(unsafe.Pointer(&bPlane))))
 	req.length = 1 // number of elements in req.m.planes
 
 	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF, uintptr(unsafe.Pointer(req))); err != nil {
@@ -512,8 +512,8 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 		return
 	}
 
-	var offset uint32
-	if err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, &offset); err != nil {
+	plane := &v4l2_plane{}
+	if err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, &plane); err != nil {
 		err = errors.New(fmt.Sprintf("cannot read offset: %v", err.Error()))
 		return
 	}
@@ -522,10 +522,10 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	fmt.Println(hex.Dump(req.union[:]))
 	fmt.Printf("Bytes used: %d\n", plane.bytesused)
 	fmt.Printf("Length set: %d\n", plane.length)
-	buffer, err = unix.Mmap(int(fd), int64(offset), int(*length), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
-	if err != nil {
-		err = errors.New(fmt.Sprintf("cannot map file into memory: %v", err.Error()))
-	}
+	// buffer, err = unix.Mmap(int(fd), int64(offset), int(*length), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
+	// if err != nil {
+	// 	err = errors.New(fmt.Sprintf("cannot map file into memory: %v", err.Error()))
+	// }
 	return
 }
 
