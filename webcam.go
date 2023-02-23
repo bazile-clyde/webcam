@@ -228,11 +228,11 @@ func (w *Webcam) StartStreaming_v2() error {
 		return errors.New("Already streaming")
 	}
 
-	if err := w.requestAndMapQueryBuffer(V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE); err != nil {
+	if err := w.requestAndMapQueryBuffer(V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE); err != nil {
 		return err
 	}
 
-	if err := w.requestAndMapQueryBuffer(V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE); err != nil {
+	if err := w.requestAndMapQueryBuffer(V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE); err != nil {
 		return err
 	}
 
