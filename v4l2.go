@@ -537,20 +537,16 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	fmt.Println(planes[0])
 	fmt.Println("DONE")
 
-	plane := &v4l2_plane{}
-	if err = binary.Read(bytes.NewBuffer(*(*[]byte)(unsafe.Pointer(&planes[0]))), NativeByteOrder, plane); err != nil {
-		err = errors.New(fmt.Sprintf("cannot read plane: %v", err.Error()))
-		return
-	}
-
 	fmt.Println("Bytes:")
 	fmt.Println(hex.Dump(req.union[:]))
-	fmt.Printf("Bytes used: %d\n", plane.bytesused)
-	fmt.Printf("Length set: %d\n", plane.length)
-	// buffer, err = unix.Mmap(int(fd), int64(offset), int(*length), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
-	// if err != nil {
-	// 	err = errors.New(fmt.Sprintf("cannot map file into memory: %v", err.Error()))
-	// }
+	fmt.Printf("Length set: %d\n", planes[0].length)
+
+	*length = planes[0].length
+
+	buffer, err = unix.Mmap(int(fd), int64(planes[0].data_offset), int(*length), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
+	if err != nil {
+		err = errors.New(fmt.Sprintf("cannot map file into memory: %v", err.Error()))
+	}
 	return
 }
 
