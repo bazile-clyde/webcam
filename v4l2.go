@@ -507,14 +507,24 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	NativeByteOrder.PutUint64(req.union[:], uint64(uintptr(unsafe.Pointer(&planes[0]))))
 	req.length = 1 // number of elements in req.m.planes
 
-	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF, uintptr(unsafe.Pointer(req))); err != nil {
-		err = errors.New(fmt.Sprintf("cannot query the status of the buffer: %v", err.Error()))
-		return
-	}
+	fmt.Println("BEFORE")
 	fmt.Println("Planes Bytes:")
 	fmt.Println(hex.Dump(req.union[:]))
 	fmt.Println("Planes[0]:")
 	fmt.Printf(hex.Dump(*(*[]byte)(unsafe.Pointer(&planes[0]))))
+	fmt.Println("DONE")
+
+	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF, uintptr(unsafe.Pointer(req))); err != nil {
+		err = errors.New(fmt.Sprintf("cannot query the status of the buffer: %v", err.Error()))
+		return
+	}
+
+	fmt.Println("AFTER")
+	fmt.Println("Planes Bytes:")
+	fmt.Println(hex.Dump(req.union[:]))
+	fmt.Println("Planes[0]:")
+	fmt.Printf(hex.Dump(*(*[]byte)(unsafe.Pointer(&planes[0]))))
+	fmt.Println("DONE")
 
 	plane := &v4l2_plane{}
 	if err = binary.Read(bytes.NewBuffer(*(*[]byte)(unsafe.Pointer(&planes[0]))), NativeByteOrder, plane); err != nil {
