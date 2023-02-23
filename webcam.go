@@ -79,7 +79,7 @@ func Open_v2(path string) (*Webcam, error) {
 	}
 
 	w := new(Webcam)
-	w.fd = uintptr(fd)
+	w.fd = fd
 	w.bufcount = 256
 	return w, nil
 }
