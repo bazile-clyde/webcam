@@ -207,7 +207,7 @@ func (w *Webcam) SetFramerate(fps float32) error {
 
 func (w *Webcam) requestAndMapQueryBuffer(_type uint32) error {
 	if err := mmapRequestBuffers_v2(w.fd, _type, &w.bufcount); err != nil {
-		return errors.New(fmt.Sprintf("Failed to map output buffers: %v : %v", err.Error(), _type))
+		return errors.New(fmt.Sprintf("Failed to map buffers: %v : %v", err.Error(), _type))
 	}
 
 	w.buffers = make([][]byte, w.bufcount, w.bufcount)
@@ -232,7 +232,7 @@ func (w *Webcam) StartStreaming_v2() error {
 		return err
 	}
 
-	if err := w.requestAndMapQueryBuffer(V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE); err != nil {
+	if err := w.requestAndMapQueryBuffer(V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE); err != nil {
 		return err
 	}
 
