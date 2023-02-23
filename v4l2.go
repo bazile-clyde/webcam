@@ -513,7 +513,7 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	}
 
 	plane := &v4l2_plane{}
-	if err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, &plane); err != nil {
+	if err = binary.Read(bytes.NewBuffer(req.union[:]), NativeByteOrder, plane); err != nil {
 		err = errors.New(fmt.Sprintf("cannot read offset: %v", err.Error()))
 		return
 	}
