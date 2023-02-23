@@ -523,8 +523,8 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	req.length = 1 // number of elements in req.m.planes
 
 	fmt.Println("BEFORE")
-	fmt.Println("Planes[0]:")
-	fmt.Println(hex.Dump(*(*[]byte)(unsafe.Pointer(&planes[0]))))
+	fmt.Println("planes[0]")
+	fmt.Println(planes[0])
 	fmt.Println("DONE")
 
 	if err = ioctl.Ioctl(fd, VIDIOC_QUERYBUF, uintptr(unsafe.Pointer(req))); err != nil {
@@ -533,8 +533,8 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	}
 
 	fmt.Println("AFTER")
-	fmt.Println("Planes[0]:")
-	fmt.Printf(hex.Dump(*(*[]byte)(unsafe.Pointer(&planes[0]))))
+	fmt.Println("planes[0]")
+	fmt.Println(planes[0])
 	fmt.Println("DONE")
 
 	plane := &v4l2_plane{}
