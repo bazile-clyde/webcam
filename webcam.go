@@ -5,6 +5,7 @@ package webcam
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"unsafe"
 
@@ -204,24 +205,35 @@ func (w *Webcam) SetFramerate(fps float32) error {
 	return setFramerate(w.fd, 1000, uint32(1000*(fps)))
 }
 
-func (w *Webcam) StartStreaming_v2() error {
-	if w.streaming {
-		return errors.New("Already streaming")
-	}
-
-	if err := mmapRequestBuffers_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, &w.bufcount); err != nil {
-		return errors.New("Failed to map output request buffers: " + string(err.Error()))
+func (w *Webcam) requestAndMapQueryBuffer(_type uint32) error {
+	if err := mmapRequestBuffers_v2(w.fd, _type, &w.bufcount); err != nil {
+		return errors.New(fmt.Sprintf("Failed to map output buffers: %v : %v", err.Error(), _type))
 	}
 
 	w.buffers = make([][]byte, w.bufcount, w.bufcount)
 	for index, _ := range w.buffers {
 		var length uint32
-		output, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, uint32(index), &length)
+		output, err := mmapQueryBuffer_v2(w.fd, _type, uint32(index), &length)
 		if err != nil {
-			return errors.New("Failed to map output memory: " + string(err.Error()))
+			return errors.New(fmt.Sprintf("Failed to map memory: %v : %v", err.Error(), _type))
 		}
 
 		w.buffers[index] = output
+	}
+	return nil
+}
+
+func (w *Webcam) StartStreaming_v2() error {
+	if w.streaming {
+		return errors.New("Already streaming")
+	}
+
+	if err := w.requestAndMapQueryBuffer(V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE); err != nil {
+		return err
+	}
+
+	if err := w.requestAndMapQueryBuffer(V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE); err != nil {
+		return err
 	}
 
 	// w.buffers = make([][]byte, w.bufcount, w.bufcount)
