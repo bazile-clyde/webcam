@@ -492,6 +492,7 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 
 	req._type = _type
 	req.index = index
+	req.memory = V4L2_MEMORY_MMAP
 
 	if req.reserved != 0 || req.reserved2 != 0 {
 		panic("The reserved and reserved2 fields must be set to 0")
@@ -514,8 +515,9 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	}
 
 	*length = planes[0].length
+	offset := *(*int64)(unsafe.Pointer(&planes[0].m)) // only works for 64-bit arch
 
-	buffer, err = unix.Mmap(int(fd), int64(planes[0].data_offset), int(*length), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
+	buffer, err = unix.Mmap(int(fd), offset, int(*length), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
 	if err != nil {
 		err = errors.New(fmt.Sprintf("cannot map file into memory: %v", err.Error()))
 	}
