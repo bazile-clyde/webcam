@@ -511,6 +511,10 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 		err = errors.New(fmt.Sprintf("cannot query the status of the buffer: %v", err.Error()))
 		return
 	}
+	fmt.Println("Planes Bytes:")
+	fmt.Println(hex.Dump(req.union[:]))
+	fmt.Println("Planes[0]:")
+	fmt.Printf(hex.Dump(*(*[]byte)(unsafe.Pointer(&planes))))
 
 	plane := &v4l2_plane{}
 	if err = binary.Read(bytes.NewBuffer(*(*[]byte)(unsafe.Pointer(&planes[0]))), NativeByteOrder, plane); err != nil {
