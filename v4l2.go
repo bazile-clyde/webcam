@@ -503,8 +503,8 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	}
 
 	planes := [1]v4l2_plane{{}} // must have a pointer that refers to the newly created object to avoid GC.
-	fmt.Printf("planes address: %x\n", &planes)
-	fmt.Printf("planes[0] address: %x\n", &planes[0])
+	fmt.Printf("planes address: %p\n", &planes)
+	fmt.Printf("planes[0] address: %p\n", &planes[0])
 	fmt.Printf("req.union hex dump:")
 	fmt.Println(hex.Dump(req.union[:]))
 	fmt.Println("filling req.union...")
@@ -512,7 +512,7 @@ func mmapQueryBuffer_v2(fd uintptr, _type uint32, index uint32, length *uint32) 
 	NativeByteOrder.PutUint64(req.union[:], uint64(uintptr(unsafe.Pointer(&planes[0]))))
 	fmt.Println("done")
 	fmt.Println(hex.Dump(req.union[:]))
-	fmt.Printf("planes[0] address: %x\n", &planes[0])
+	fmt.Printf("planes[0] address: %p\n", &planes[0])
 
 	req.length = 1 // number of elements in req.m.planes
 
