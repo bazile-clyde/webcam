@@ -381,14 +381,27 @@ func (w *Webcam) StopStreaming() error {
 		return errors.New("Request to stop streaming when not streaming")
 	}
 	w.streaming = false
-	for _, buffer := range w.buffers {
+	if err := closeBuffers(w.buffersOutput); err != nil {
+		return err
+	}
+	if err := closeBuffers(w.buffersCapture); err != nil {
+		return err
+	}
+	if err := closeBuffers(w.buffers); err != nil {
+		return err
+	}
+
+	return stopStreaming(w.fd)
+}
+
+func closeBuffers(buffers [][]byte) error {
+	for _, buffer := range buffers {
 		err := mmapReleaseBuffer(buffer)
 		if err != nil {
 			return err
 		}
 	}
-
-	return stopStreaming(w.fd)
+	return nil
 }
 
 // Close the device
