@@ -6,6 +6,8 @@ package webcam
 import (
 	"errors"
 	"fmt"
+	"github.com/blackjack/webcam/ioctl"
+	"os"
 	"reflect"
 	"unsafe"
 
@@ -321,6 +323,71 @@ func (w *Webcam) ReadFrame() ([]byte, error) {
 		w.ReleaseFrame(index)
 	}
 	return result, err
+}
+
+func readFrameFromSource(src *Webcam) ([]byte, error) {
+	timeout := uint32(5) // 5 seconds
+	for {
+		err := src.WaitForFrame(timeout)
+
+		switch err.(type) {
+		case nil:
+		case *Timeout:
+			fmt.Fprint(os.Stderr, err.Error())
+			continue
+		default:
+			panic(err.Error())
+		}
+
+		frame, err := src.ReadFrame()
+		if err != nil {
+			return nil, err
+		}
+
+		if len(frame) != 0 {
+			return frame, nil
+		}
+	}
+}
+
+func (w *Webcam) ReadFrame_v2(src *Webcam) ([]byte, error) {
+	buf := &v4l2_buffer{}
+	buf.memory = V4L2_MEMORY_MMAP
+	buf.length = 1
+
+	planes := [1]v4l2_plane{{}}                                                          // must have a pointer that refers to the newly created object to avoid GC.
+	NativeByteOrder.PutUint64(buf.union[:], uint64(uintptr(unsafe.Pointer(&planes[0])))) // for 32-bit arch use PutUint32
+
+	buf._type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE
+	if err := ioctl.Ioctl(w.fd, VIDIOC_DQBUF, uintptr(unsafe.Pointer(buf))); err != nil {
+		return nil, err
+	}
+
+	if err := mmapEnqueueBuffer_v2(w.fd, &w.buffersOutput[0]); err != nil {
+		return nil, err
+	}
+
+	frame, err := readFrameFromSource(src)
+	if err != nil {
+		return frame, nil
+	}
+
+	// NativeByteOrder.PutUint32(*(*[]byte)(unsafe.Pointer(&planes[0].bytesused)), uint32(uintptr(unsafe.Pointer(&frame)))) // for 32-bit arch use PutUint32
+	if err = mmapEnqueueBuffer_v2(w.fd, &w.buffersOutput[0]); err != nil {
+		return nil, err
+	}
+
+	buf._type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE
+	if err := ioctl.Ioctl(w.fd, VIDIOC_DQBUF, uintptr(unsafe.Pointer(buf))); err != nil {
+		return nil, err
+	}
+
+	// len := planes[0].bytesused
+	if err = mmapEnqueueBuffer_v2(w.fd, &w.buffersCapture[0]); err != nil {
+		return nil, err
+	}
+
+	return frame, nil
 }
 
 // Get a single frame from the webcam and return the frame and

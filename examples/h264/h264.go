@@ -2,9 +2,11 @@ package main
 
 import "C"
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/blackjack/webcam"
+	"image/jpeg"
 	"os"
 )
 
@@ -58,23 +60,6 @@ func main() {
 	err = source.StartStreaming()
 	panicOnError(err)
 
-	timeout := uint32(5) // 5 seconds
-	err = source.WaitForFrame(timeout)
-	panicOnError(err)
-
-	// frame, err := source.ReadFrame()
-	_, err = source.ReadFrame()
-	panicOnError(err)
-
-	// img, err := jpeg.Decode(bytes.NewReader(frame))
-	// panicOnError(err)
-
-	// file, err := os.Create("img.jpg")
-	// panicOnError(err)
-
-	// defer file.Close()
-	// panicOnError(jpeg.Encode(file, img, nil))
-
 	codec, err := webcam.Open_v2("/dev/video11")
 	panicOnError(err)
 	defer codec.Close()
@@ -89,6 +74,18 @@ func main() {
 	panicOnError(err)
 
 	panicOnError(codec.StartStreaming_v2())
+
+	frame, err := codec.ReadFrame_v2(source)
+	panicOnError(err)
+
+	img, err := jpeg.Decode(bytes.NewReader(frame))
+	panicOnError(err)
+
+	file, err := os.Create("img.jpg")
+	panicOnError(err)
+
+	defer file.Close()
+	panicOnError(jpeg.Encode(file, img, nil))
 
 	fmt.Println("finished")
 }
