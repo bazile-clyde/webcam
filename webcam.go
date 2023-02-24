@@ -360,31 +360,27 @@ func (w *Webcam) ReadFrame_v2(src *Webcam) ([]byte, error) {
 
 	buf._type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE
 	if err := ioctl.Ioctl(w.fd, VIDIOC_DQBUF, uintptr(unsafe.Pointer(buf))); err != nil {
-		return nil, err
-	}
-
-	if err := mmapEnqueueBuffer_v2(w.fd, &w.buffersOutput[0]); err != nil {
-		return nil, err
+		return nil, errors.New(fmt.Sprintf("cannot dequeue output buffer: %s", err.Error()))
 	}
 
 	frame, err := readFrameFromSource(src)
 	if err != nil {
-		return frame, nil
+		return nil, errors.New(fmt.Sprintf("cannot get frame from source: %s", err.Error()))
 	}
 
 	// NativeByteOrder.PutUint32(*(*[]byte)(unsafe.Pointer(&planes[0].bytesused)), uint32(uintptr(unsafe.Pointer(&frame)))) // for 32-bit arch use PutUint32
-	if err = mmapEnqueueBuffer_v2(w.fd, &w.buffersOutput[0]); err != nil {
-		return nil, err
+	if err := mmapEnqueueBuffer_v2(w.fd, &w.buffersOutput[0]); err != nil {
+		return nil, errors.New(fmt.Sprintf("cannot enqueue output buffer: %s", err.Error()))
 	}
 
 	buf._type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE
 	if err := ioctl.Ioctl(w.fd, VIDIOC_DQBUF, uintptr(unsafe.Pointer(buf))); err != nil {
-		return nil, err
+		return nil, errors.New(fmt.Sprintf("cannot dequeue capture buffer: %s", err.Error()))
 	}
 
 	// len := planes[0].bytesused
 	if err = mmapEnqueueBuffer_v2(w.fd, &w.buffersCapture[0]); err != nil {
-		return nil, err
+		return nil, errors.New(fmt.Sprintf("cannot enqueue capture buffer: %s", err.Error()))
 	}
 
 	return frame, nil
