@@ -571,13 +571,11 @@ func mmapDequeueBuffer(fd uintptr, index *uint32, length *uint32) (err error) {
 
 }
 
-func mmapEnqueueBuffer_v2(fd uintptr, _type uint32, index uint32) (err error) {
-
-	buffer := &v4l2_buffer{}
-
-	buffer._type = _type
-	buffer.memory = V4L2_MEMORY_MMAP
-	buffer.index = index
+func mmapEnqueueBuffer_v2(fd uintptr, buffer *[]byte) (err error) {
+	b := *(*v4l2_buffer)(unsafe.Pointer(buffer))
+	if b.length != 1 {
+		panic("information from previous operations not saved")
+	}
 
 	err = ioctl.Ioctl(fd, VIDIOC_QBUF, uintptr(unsafe.Pointer(buffer)))
 	return

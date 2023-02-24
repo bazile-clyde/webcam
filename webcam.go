@@ -207,26 +207,28 @@ func (w *Webcam) SetFramerate(fps float32) error {
 	return setFramerate(w.fd, 1000, uint32(1000*(fps)))
 }
 
-func (w *Webcam) requestAndMapQueryBuffer(_type uint32) error {
+func (w *Webcam) requestAndMapQueryBuffer(_type uint32, buffers [][]byte) error {
 	if err := mmapRequestBuffers_v2(w.fd, _type, &w.bufcount); err != nil {
 		return errors.New(fmt.Sprintf("Failed to map buffers: %v : %v", err.Error(), _type))
 	}
 
-	w.buffers = make([][]byte, w.bufcount, w.bufcount)
-	for index, _ := range w.buffers {
+	buffers = make([][]byte, w.bufcount, w.bufcount)
+	for index, _ := range buffers {
 		var length uint32
 		buffer, err := mmapQueryBuffer_v2(w.fd, _type, uint32(index), &length)
 		if err != nil {
 			return errors.New(fmt.Sprintf("Failed to map memory: %v : %v", err.Error(), _type))
 		}
 
-		switch _type {
-		case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
-			w.buffersCapture[index] = buffer
-		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
-			w.buffersOutput[index] = buffer
-		default:
-			panic(fmt.Sprintf("unrecognized buffer type %v", _type))
+		buffers[index] = buffer
+	}
+	return nil
+}
+
+func (w *Webcam) enqueueBuffer(_type uint32, buffers [][]byte) error {
+	for index, _ := range buffers {
+		if err := mmapEnqueueBuffer_v2(w.fd, &buffers[index]); err != nil {
+			return errors.New(fmt.Sprintf("Failed to enqueue buffer: %s : %d", err.Error(), _type))
 		}
 	}
 	return nil
@@ -237,47 +239,21 @@ func (w *Webcam) StartStreaming_v2() error {
 		return errors.New("Already streaming")
 	}
 
-	if err := w.requestAndMapQueryBuffer(V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE); err != nil {
+	if err := w.requestAndMapQueryBuffer(V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, w.buffersOutput); err != nil {
 		return err
 	}
 
-	if err := w.requestAndMapQueryBuffer(V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE); err != nil {
+	if err := w.requestAndMapQueryBuffer(V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, w.buffersCapture); err != nil {
 		return err
 	}
 
-	// w.buffers = make([][]byte, w.bufcount, w.bufcount)
-	// var length uint32
-	// output, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, OUTPUT, &length)
-	// if err != nil {
-	// 	return errors.New("Failed to map output memory: " + string(err.Error()))
-	// }
-	// w.buffers[OUTPUT] = output
+	if err := w.enqueueBuffer(V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, w.buffersOutput); err != nil {
+		return err
+	}
 
-	// // if err := mmapRequestBuffers_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, &w.bufcount); err != nil {
-	// // 	return errors.New("Failed to map capture request buffers: " + string(err.Error()))
-	// // }
-
-	// // capture, err := mmapQueryBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, CAPTURE, &length)
-	// // if err != nil {
-	// // 	return errors.New("Failed to map capture memory: " + string(err.Error()))
-	// // }
-	// // w.buffers[CAPTURE] = capture
-
-	// if err := mmapEnqueueBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, uint32(OUTPUT)); err != nil {
-	// 	return errors.New("Failed to enqueue output buffer: " + string(err.Error()))
-	// }
-
-	// // if err := mmapEnqueueBuffer_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, uint32(CAPTURE)); err != nil {
-	// // 	return errors.New("Failed to enqueue capture buffer: " + string(err.Error()))
-	// // }
-
-	// if err = startStreaming_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE); err != nil {
-	// 	return errors.New("Failed to start output streaming: " + string(err.Error()))
-	// }
-
-	// // if err = startStreaming_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE); err != nil {
-	// // 	return errors.New("Failed to start capture streaming: " + string(err.Error()))
-	// // }
+	if err := w.enqueueBuffer(V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, w.buffersCapture); err != nil {
+		return err
+	}
 
 	w.streaming = true
 	return nil
