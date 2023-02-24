@@ -255,6 +255,14 @@ func (w *Webcam) StartStreaming_v2() error {
 		return err
 	}
 
+	if err := startStreaming_v2(w.fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE); err != nil {
+		return err
+	}
+
+	if err := startStreaming_v2(w.fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE); err != nil {
+		return err
+	}
+
 	w.streaming = true
 	return nil
 }
