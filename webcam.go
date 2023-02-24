@@ -14,10 +14,12 @@ import (
 
 // Webcam object
 type Webcam struct {
-	fd        uintptr
-	bufcount  uint32
-	buffers   [][]byte
-	streaming bool
+	fd             uintptr
+	bufcount       uint32
+	buffers        [][]byte
+	buffersCapture [][]byte
+	buffersOutput  [][]byte
+	streaming      bool
 }
 
 type ControlID uint32
@@ -213,12 +215,19 @@ func (w *Webcam) requestAndMapQueryBuffer(_type uint32) error {
 	w.buffers = make([][]byte, w.bufcount, w.bufcount)
 	for index, _ := range w.buffers {
 		var length uint32
-		output, err := mmapQueryBuffer_v2(w.fd, _type, uint32(index), &length)
+		buffer, err := mmapQueryBuffer_v2(w.fd, _type, uint32(index), &length)
 		if err != nil {
 			return errors.New(fmt.Sprintf("Failed to map memory: %v : %v", err.Error(), _type))
 		}
 
-		w.buffers[index] = output
+		switch _type {
+		case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+			w.buffersCapture[index] = buffer
+		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+			w.buffersOutput[index] = buffer
+		default:
+			panic(fmt.Sprintf("unrecognized buffer type %v", _type))
+		}
 	}
 	return nil
 }
