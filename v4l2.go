@@ -30,11 +30,11 @@ type control struct {
 const (
 	V4L2_CAP_VIDEO_CAPTURE             uint32 = 0x00000001
 	V4L2_CAP_STREAMING                 uint32 = 0x04000000
-	V4L2_CAP_VIDEO_M2M                        = 0x00008000
-	V4L2_CAP_VIDEO_M2M_MPLANE                 = 0x00004000
+	V4L2_CAP_VIDEO_M2M                 uint32 = 0x00008000
+	V4L2_CAP_VIDEO_M2M_MPLANE          uint32 = 0x00004000
 	V4L2_BUF_TYPE_VIDEO_CAPTURE        uint32 = 1
-	V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE        = 9
-	V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE         = 10
+	V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE uint32 = 9
+	V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE  uint32 = 10
 	V4L2_MEMORY_MMAP                   uint32 = 1
 	V4L2_FIELD_ANY                     uint32 = 0
 )

@@ -355,7 +355,8 @@ func (w *Webcam) ReadFrame_v2(src *Webcam) ([]byte, error) {
 	buf.memory = V4L2_MEMORY_MMAP
 	buf.length = 1
 
-	planes := [1]v4l2_plane{{}}                                                          // must have a pointer that refers to the newly created object to avoid GC.
+	// must have a pointer that refers to the newly created object to avoid GC.
+	planes := [1]v4l2_plane{{}}
 	NativeByteOrder.PutUint64(buf.union[:], uint64(uintptr(unsafe.Pointer(&planes[0])))) // for 32-bit arch use PutUint32
 
 	buf._type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE
@@ -368,7 +369,7 @@ func (w *Webcam) ReadFrame_v2(src *Webcam) ([]byte, error) {
 		return nil, errors.New(fmt.Sprintf("cannot get frame from source: %s", err.Error()))
 	}
 
-	// NativeByteOrder.PutUint32(*(*[]byte)(unsafe.Pointer(&planes[0].bytesused)), uint32(uintptr(unsafe.Pointer(&frame)))) // for 32-bit arch use PutUint32
+	// NativeByteOrder.PutUint64(*(*[]byte)(unsafe.Pointer(&planes[0].bytesused)), uint64(uintptr(unsafe.Pointer(&frame)))) // for 32-bit arch use PutUint32
 	if err := mmapEnqueueBuffer_v2(w.fd, &w.buffersOutput[0]); err != nil {
 		return nil, errors.New(fmt.Sprintf("cannot enqueue output buffer: %s", err.Error()))
 	}
